@@ -28,9 +28,9 @@ def createDistributionLabels(targetArray):
 
 
 def genSimDistMat(measure, labels, labelDistribution = True): 
-    if type(labels) == 'str': labels = locals()[labels]
-    if labelDistribution: Y = labels
-    else: Y = createDistributionLabels(labels)     
+    if type(labels) == str: Y = globals()[labels]
+    if labelDistribution: pass
+    else: Y = createDistributionLabels(Y)     
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     for i in range(S.shape[0]):
         for j in range(S.shape[0]):
@@ -65,9 +65,12 @@ def metricStats(metricList, labels):
     
 
 def metricStatsforLabelList(metricList, labelsList):
+    resultList = []
     for labels in labelsList:
-        print metricStats(metricList, labels)
-  
+        result = metricStats(metricList, labels)
+        resultList.append(result)
+        print result
+    return resultList
     
 
 #################SCRIPT TO CALC THE MATRICES##########
@@ -83,7 +86,7 @@ for fileName in os.listdir('./'):
     locals()['{0}'.format(fileName)] = np.genfromtxt(fileName, delimiter=',') #This is probably not safe to use
     labelsList.append(fileName)
 
-metricStatsforLabelList(metrics, labelsList)
+results = metricStatsforLabelList(metrics, labelsList)
 
 
 
