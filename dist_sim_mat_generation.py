@@ -46,7 +46,7 @@ def genSimDistMat(measure, labels, labelDistribution = True):
             if measure == 'KL':
                 tempSum = 0
                 for k in range(len(Y[i])):
-                    tempSum += Y[i,k]*np.log(Y[i,k]/(Y[j,k]))
+                    tempSum += Y[i,k]*np.log(Y[i,k]/(Y[j,k] if Y[j,k]>0 else 0.01))
                 S[i,j] = tempSum
     return S
     
@@ -65,12 +65,15 @@ def metricStats(metricList, labels):
     
 
 def metricStatsforLabelList(metricList, labelsList):
-    resultList = []
+    global resultDict
+    resultDict = {}
     for labels in labelsList:
         result = metricStats(metricList, labels)
-        resultList.append(result)
+        resultDict[labels] = result
+        print labels
         print result
-    return resultList
+        print '\n'
+    return resultDict
     
 
 #################SCRIPT TO CALC THE MATRICES##########
@@ -86,7 +89,11 @@ for fileName in os.listdir('./'):
     locals()['{0}'.format(fileName)] = np.genfromtxt(fileName, delimiter=',') #This is probably not safe to use
     labelsList.append(fileName)
 
-results = metricStatsforLabelList(metrics, labelsList)
+labelsList
+
+smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv', 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
+
+results = metricStatsforLabelList(metrics, smallerLabelsList)
 
 
 
