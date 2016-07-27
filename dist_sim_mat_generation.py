@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 
-os.chdir('C:/Users/syarlag1/Desktop/Label Distribution Metric Learning/data')
+os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
 
 
 ###############FUNCTIONS############################
@@ -28,6 +28,7 @@ def createDistributionLabels(targetArray):
 
 
 def genSimDistMat(measure, labels, labelDistribution = True): 
+    if type(labels) == 'str': labels = locals()[labels]
     if labelDistribution: Y = labels
     else: Y = createDistributionLabels(labels)     
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
@@ -62,7 +63,11 @@ def metricStats(metricList, labels):
     colNames = ['Metric', 'Mean', 'StdDev', 'MaxValue', 'MinValue']
     return pd.DataFrame(combinedList, columns = colNames)
     
-    
+
+def metricStatsforLabelList(metricList, labelsList):
+    for labels in labelsList:
+        print metricStats(metricList, labels)
+  
     
 
 #################SCRIPT TO CALC THE MATRICES##########
@@ -70,7 +75,16 @@ def metricStats(metricList, labels):
 metrics = ['cosine', 'fidelity', 'intersection', 'euclidean', 'sorensen', 'squaredChiSq',\
                'chebyshev', 'clark', 'canberra','KL']
 
-trial = np.array([[0.1, 0.2, 0.3, 0.4],[0.5, 0.5, 0, 0], [0.1, 0.3, 0.6, 0], [0.2, 0.4, 0.1, 0.3]])
+#trial = np.array([[0.1, 0.2, 0.3, 0.4],[0.5, 0.5, 0, 0], [0.1, 0.3, 0.6, 0], [0.2, 0.4, 0.1, 0.3]])
+#metricStats(metrics, trial)
+
+labelsList = []
+for fileName in os.listdir('./'):
+    locals()['{0}'.format(fileName)] = np.genfromtxt(fileName, delimiter=',') #This is probably not safe to use
+    labelsList.append(fileName)
+
+metricStatsforLabelList(metrics, labelsList)
 
 
-metricStats(metrics, trial)
+
+
