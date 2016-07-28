@@ -9,7 +9,7 @@ import numpy as np
 import random
 from sklearn.preprocessing import MinMaxScaler
 
-os.chdir('C:/Users/SYARLAG1/Desktop/Label Distribution Metric Learning/data')
+os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
 
 #####################FUNCTIONS THAT WILL BE USED FOR PREPARING DATA###########################################
 
@@ -114,18 +114,19 @@ def constraint(A, Nei, d_ij_D, diagnol = True):
                        const.append(-Nei[i,j2]*(np.dot(np.square(X[i]-X[j2]),A))+Nei[i,j1]*(np.dot(np.square(X[i]-X[j1]),A)))
 
 #########################DATA PREPARATION##########################################################################
-X_data = np.genfromtxt('./MovieX.csv', delimiter = ',')
-Y_data = np.genfromtxt('./MovieY.csv', delimiter = ',')
-
-X_data = np.genfromtxt('./YeastX.csv', delimiter = ',')
-Y_data = np.genfromtxt('./YeastY.csv', delimiter = ',')
-
 X_data = np.genfromtxt('./LIDC_REU2015.csv', delimiter = ',', skip_header = 1 , usecols = (range(11,76)))
 Y_data = np.genfromtxt('./LIDC_REU2015.csv', delimiter = ',', skip_header = 1, usecols = (84,93,102,111)).astype(int)
 
+X_data = np.genfromtxt('./SJAFeatures.csv', delimiter = ',')
+Y_data = np.genfromtxt('./SJALabels.csv', delimiter = ',')
+
+X_data = np.genfromtxt('./naturalSceneFeatures.csv', delimiter = ',')
+Y_data = np.genfromtxt('./naturalSceneLabels.csv', delimiter = ',')
+
+
 trainX, trainY, testX, testY = splitTrainTest(X_data,Y_data,0.7,99)
 
-X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY, scale ='-11',alpha = 0.5)
+X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY, scale ='01',alpha = 0.5)
 
 NN3_Ws = findKNeighbourhood(S,D,R,k=3)
 np.savetxt('./N.csv',NN3_Ws)

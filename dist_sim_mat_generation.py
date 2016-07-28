@@ -27,7 +27,7 @@ def createDistributionLabels(targetArray):
     
 
 
-def genSimDistMat(measure, labels, labelDistribution = True): 
+def genSimDistMat(measure, labels, sigma=0.1, labelDistribution = True): 
     if type(labels) == str: Y = globals()[labels]
     if labelDistribution: pass
     else: Y = createDistributionLabels(Y)     
@@ -42,25 +42,27 @@ def genSimDistMat(measure, labels, labelDistribution = True):
             if measure == 'squaredChiSq': S[i,j] = np.sum(np.square(Y[i]-Y[j])/(Y[i]+Y[j]))
             if measure == 'chebyshev': S[i,j] = np.max(np.abs(Y[i] - Y[j]))            
             if measure == 'clark': S[i,j] =  np.sqrt(np.sum(np.square(Y[i]-Y[j])/np.square((Y[i]+Y[j]))))
-            if measure == 'canberra': S[i,j] = np.sum(np.abs(Y[i]-Y[j])/((Y[i]+Y[j])))    
+            if measure == 'canberra': S[i,j] = np.sum(np.abs(Y[i]-Y[j])/((Y[i]+Y[j])))   
+            if measure == 'gaussian': S[i,j] = np.exp(-(np.sqrt(np.sum(np.dot((Y[i]-Y[j]),(Y[i]-Y[j])))))**2/(2*sigma**2))
             if measure == 'KL':
                 tempSum = 0
                 for k in range(len(Y[i])):
-                    tempSum += Y[i,k]*np.log(Y[i,k]/(Y[j,k] if Y[j,k]>0 else 0.01))
+                    tempSum += Y[i,k]*(np.log((Y[i,k] if Y[i,k]>0 else 0.01)/(Y[j,k] if Y[j,k]>0 else 0.01)))
                 S[i,j] = tempSum
     return S
     
 
 def metricStats(metricList, labels):
-    mean = []; std = []; maxLst = []; minLst = []
+    mean = []; std = []; maxLst = []; minLst = []; nanCount = []
     for metric in metricList: #Nan values are ignored when calculating the performance
         S = genSimDistMat(metric, labels)
+        nanCount.append(np.sum(np.isnan(S)))
         mean.append(np.nanmean(S))       
         std.append(np.nanstd(S))
         maxLst.append(np.nanmax(S))
         minLst.append(np.nanmin(S))
-    combinedList = zip(metricList, mean, std, maxLst, minLst)
-    colNames = ['Metric', 'Mean', 'StdDev', 'MaxValue', 'MinValue']
+    combinedList = zip(metricList, mean, std, maxLst, minLst, nanCount)
+    colNames = ['Metric', 'Mean', 'StdDev', 'MaxValue', 'MinValue', 'NanCount']
     return pd.DataFrame(combinedList, columns = colNames)
     
 
@@ -79,16 +81,16 @@ def metricStatsforLabelList(metricList, labelsList):
 #################SCRIPT TO CALC THE MATRICES##########
 
 metrics = ['cosine', 'fidelity', 'intersection', 'euclidean', 'sorensen', 'squaredChiSq',\
-               'chebyshev', 'clark', 'canberra','KL']
+               'chebyshev', 'clark', 'canberra','KL', 'gaussian']
 
 #trial = np.array([[0.1, 0.2, 0.3, 0.4],[0.5, 0.5, 0, 0], [0.1, 0.3, 0.6, 0], [0.2, 0.4, 0.1, 0.3]])
 #metricStats(metrics, trial)
 
 labelsList = []
 for fileName in os.listdir('./'):
-    locals()['{0}'.format(fileName)] = np.genfromtxt(fileName, delimiter=',') #This is probably not safe to use
-    labelsList.append(fileName)
-
+    if 'Label' in fileName:
+        locals()['{0}'.format(fileName)] = np.genfromtxt(fileName, delimiter=',') #This is probably not safe to use
+        labelsList.append(fileName)
 labelsList
 
 smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv', 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
