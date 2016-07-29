@@ -128,6 +128,11 @@ trainX, trainY, testX, testY = splitTrainTest(X_data,Y_data,0.7,99)
 
 X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY, scale ='01',alpha = 0.5)
 
+cd ..
+
+np.savetxt('./S.csv',S)
+np.savetxt('./R.csv', R)
+
 NN3_Ws = findKNeighbourhood(S,D,R,k=3)
 np.savetxt('./N.csv',NN3_Ws)
 np.savetxt('./X.csv',trainX)
