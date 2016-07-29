@@ -27,11 +27,12 @@ def createDistributionLabels(targetArray):
     
 
 
-def genSimDistMat(measure, labels, sigma=0.1, labelDistribution = True): 
+def genSimDistMat(measure, labels, sigma=None, labelDistribution = True): 
     if type(labels) == str: Y = globals()[labels]
     if labelDistribution: pass
     else: Y = createDistributionLabels(Y)     
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
+    if measure == 'gaussian': return gaussSimMatrix(labels, sigma)
     for i in range(S.shape[0]):
         for j in range(S.shape[0]):
             if measure == 'cosine': S[i,j] = np.dot(Y[i],Y[j])/(np.linalg.norm(Y[i])*np.linalg.norm(Y[j]))
@@ -42,15 +43,21 @@ def genSimDistMat(measure, labels, sigma=0.1, labelDistribution = True):
             if measure == 'squaredChiSq': S[i,j] = np.sum(np.square(Y[i]-Y[j])/(Y[i]+Y[j]))
             if measure == 'chebyshev': S[i,j] = np.max(np.abs(Y[i] - Y[j]))            
             if measure == 'clark': S[i,j] =  np.sqrt(np.sum(np.square(Y[i]-Y[j])/np.square((Y[i]+Y[j]))))
-            if measure == 'canberra': S[i,j] = np.sum(np.abs(Y[i]-Y[j])/((Y[i]+Y[j])))   
-            if measure == 'gaussian': S[i,j] = np.exp(-(np.sqrt(np.sum(np.dot((Y[i]-Y[j]),(Y[i]-Y[j])))))**2/(2*sigma**2))
+            if measure == 'canberra': S[i,j] = np.sum(np.abs(Y[i]-Y[j])/((Y[i]+Y[j])))
+           #if measure == 'gaussian': S[i,j] = np.exp(-(np.sqrt(np.sum(np.dot((Y[i]-Y[j]),(Y[i]-Y[j])))))**2/(2*sigma**2))
             if measure == 'KL':
                 tempSum = 0
                 for k in range(len(Y[i])):
                     tempSum += Y[i,k]*(np.log((Y[i,k] if Y[i,k]>0 else 0.01)/(Y[j,k] if Y[j,k]>0 else 0.01)))
                 S[i,j] = tempSum
     return S
-    
+
+def gaussSimMatrix(labels, sigma=None):
+    Y=labels    
+    euclideanSimMat =  genSimDistMat('euclidean',Y)
+    if sigma is None: sigma = np.nanstd(euclideanSimMat)
+    return np.exp(-euclideanSimMat/(2*(sigma)**2))    
+        
 
 def metricStats(metricList, labels):
     mean = []; std = []; maxLst = []; minLst = []; nanCount = []
@@ -76,7 +83,9 @@ def metricStatsforLabelList(metricList, labelsList):
         print result
         print '\n'
     return resultDict
-    
+
+
+        
 
 #################SCRIPT TO CALC THE MATRICES##########
 
