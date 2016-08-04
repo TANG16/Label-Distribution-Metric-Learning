@@ -8,9 +8,10 @@ Created on Tue Jul 26 21:18:48 2016
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
-os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
-
+#os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
+os.chdir('/Users/Sriram/Desktop/DePaul/Label-Distribution-Metric-Learning/data')
 
 ###############FUNCTIONS############################
 
@@ -32,7 +33,7 @@ def genSimDistMat(measure, labels, sigma=None, labelDistribution = True):
     if labelDistribution: pass
     else: Y = createDistributionLabels(Y)     
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
-    if measure == 'gaussian': return gaussSimMatrix(labels, sigma)
+    if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
     for i in range(S.shape[0]):
         for j in range(S.shape[0]):
             if measure == 'cosine': S[i,j] = np.dot(Y[i],Y[j])/(np.linalg.norm(Y[i])*np.linalg.norm(Y[j]))
@@ -56,7 +57,7 @@ def gaussSimMatrix(labels, sigma=None):
     Y=labels    
     euclideanSimMat =  genSimDistMat('euclidean',Y)
     if sigma is None: sigma = np.nanstd(euclideanSimMat)
-    return np.exp(-euclideanSimMat/(2*(sigma)**2))    
+    return np.exp(-euclideanSimMat/(2*(sigma)**2)), sigma  
         
 
 def metricStats(metricList, labels):
@@ -105,6 +106,15 @@ labelsList
 smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv', 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
 
 results = metricStatsforLabelList(metrics, smallerLabelsList)
+
+for filename in smallerLabelsList:
+    S, EuclStddev =  gaussSimMatrix(filename, sigma=None)
+    print 'sigma = ', EuclStddev, \
+    'mean =', np.nanmean(S), 'stddev =', np.nanstd(S),\
+    'max =', np.nanmax(S), 'min =', np.nanmin(S)
+    
+    
+plt.hist(S, bins = 20) ##IMP: all the values are clustered around 0...
 
 
 
