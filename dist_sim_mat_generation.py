@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
-os.chdir('/Users/Sriram/Desktop/DePaul/Label-Distribution-Metric-Learning/data')
+os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning/data')
+#os.chdir('/Users/Sriram/Desktop/DePaul/Label-Distribution-Metric-Learning/data')
 
 ###############FUNCTIONS############################
 
@@ -75,7 +75,6 @@ def metricStats(metricList, labels):
     
 
 def metricStatsforLabelList(metricList, labelsList):
-    global resultDict
     resultDict = {}
     for labels in labelsList:
         result = metricStats(metricList, labels)
@@ -85,7 +84,19 @@ def metricStatsforLabelList(metricList, labelsList):
         print '\n'
     return resultDict
 
-
+def histCreator(metricList, labelsList):
+    os.mkdir('./images')
+    os.chdir('./images')
+    for metric in metricList:
+        for labels in labelsList:
+            figName = '%-%.png'%(metric,labelsList)
+            simDistArray = np.asarray(genSimDistMat(metric, labels, sigma=None, labelDistribution = True)).reshape(-1)
+            plt.figure()
+            plt.hist(simDistArray)
+            plt.title(figName)
+            plt.savefig(figName)
+    return            
+        
         
 
 #################SCRIPT TO CALC THE MATRICES##########
