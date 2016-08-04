@@ -85,11 +85,9 @@ def metricStatsforLabelList(metricList, labelsList):
     return resultDict
 
 def histCreator(metricList, labelsList):
-    os.mkdir('./images')
-    os.chdir('./images')
     for metric in metricList:
         for labels in labelsList:
-            figName = '%-%.png'%(metric,labelsList)
+            figName = metric + '-' + labels + '.png'
             simDistArray = np.asarray(genSimDistMat(metric, labels, sigma=None, labelDistribution = True)).reshape(-1)
             plt.figure()
             plt.hist(simDistArray)
@@ -123,10 +121,13 @@ for filename in smallerLabelsList:
     print 'sigma = ', EuclStddev, \
     'mean =', np.nanmean(S), 'stddev =', np.nanstd(S),\
     'max =', np.nanmax(S), 'min =', np.nanmin(S)
-    
+
+os.chdir('./..')
+os.mkdir('./images')
+os.chdir('./images')
+histCreator(metrics, smallerLabelsList)  
     
 plt.hist(S, bins = 20) ##IMP: all the values are clustered around 0...
-
 
 
 
