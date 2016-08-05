@@ -90,7 +90,7 @@ def histCreator(metricList, labelsList):
             figName = metric + '-' + labels + '.png'
             simDistArray = np.asarray(genSimDistMat(metric, labels, sigma=None, labelDistribution = True)).reshape(-1)
             plt.figure()
-            plt.hist(simDistArray)
+            plt.hist(simDistArray[~np.isnan(simDistArray)])
             plt.title(figName)
             plt.savefig(figName)
     return            
@@ -122,12 +122,12 @@ for filename in smallerLabelsList:
     'mean =', np.nanmean(S), 'stddev =', np.nanstd(S),\
     'max =', np.nanmax(S), 'min =', np.nanmin(S)
 
+
+####Plotting the histograms:
+
 os.chdir('./..')
 os.mkdir('./images')
 os.chdir('./images')
-histCreator(metrics, smallerLabelsList)  
-    
-plt.hist(S, bins = 20) ##IMP: all the values are clustered around 0...
-
+histCreator(metrics, smallerLabelsList)    
 
 
