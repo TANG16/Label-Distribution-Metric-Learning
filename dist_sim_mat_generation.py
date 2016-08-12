@@ -57,7 +57,7 @@ def gaussSimMatrix(labels, sigma=None):
     Y=labels    
     euclideanSimMat =  genSimDistMat('euclidean',Y)
     if sigma is None: sigma = np.nanstd(euclideanSimMat)
-    return np.exp(-euclideanSimMat/(2*(sigma)**2)), sigma  
+    return np.exp(-euclideanSimMat**2/(2*(sigma)**2)), sigma  
         
 
 def metricStats(metricList, labels):
