@@ -7,6 +7,8 @@ Created on Tue Jul 26 21:18:48 2016
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
+from sklearn.preprocessing import MinMaxScaler
 
 ###############FUNCTIONS############################
 
@@ -26,7 +28,7 @@ def createDistributionLabels(targetArray):
 # returns matrix for various sim and dist metrics
 def genSimDistMat(measure, labels, sigma=None, labelDistribution = True, percentile=True): 
     if type(labels) == str: Y = globals()[labels]
-    if labelDistribution: pass
+    if labelDistribution: Y = labels
     else: Y = createDistributionLabels(Y)     
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
@@ -76,7 +78,7 @@ def convertMatToPercentile(S):
     originalShape = S.shape
     arr = S.flatten()
     sortedUniqueArr = np.unique(np.sort(arr))
-    percentileArr = np.linspace(0.01,1,len(sortedUniqueArr))
+    percentileArr = np.linspace(0.01,0.99,len(sortedUniqueArr))
     percentileValueDict = {x:percentileArr[i] for i,x in enumerate(sortedUniqueArr)}
     percentileArr = np.array([percentileValueDict[x] for x in arr])
     
@@ -106,6 +108,55 @@ def histCreator(metricList, labelsList):
             plt.savefig(figName)
     return            
         
-        
+# returns a test-train split of data and labels
+def splitTrainTest(data,Labels,train_percent,random_state, minmax=False):
+    random.seed(random_state)
+    indexList = range(len(data))
+    random.shuffle(indexList)
+    trainIndexList = indexList[:int(len(data)*train_percent)]
+    testIndexList = indexList[int(len(data)*train_percent):] 
+    train, trainLabels, test, testLabels = data[trainIndexList], Labels[trainIndexList], data[testIndexList], Labels[testIndexList]
+    if minmax:
+        fit = MinMaxScaler.fit(train)
+        train = fit.transform(train)
+        test = fit.transform(test)
+    return train, trainLabels, test, testLabels
 
+# returns the data(X), Label Similarity(S), Feature Dist(D), S/R (R)  matrices
+## currently only accepts cosine sim and dist 
+def genSimDistRatioMats(data, targetArray, alpha = 1, LabelDistribution = True, percentile=True): 
+    X = data  
+    S = (genSimDistMat('cosine',targetArray,labelDistribution=LabelDistribution, percentile=percentile))**alpha
+    D = (1 - genSimDistMat('cosine',X,labelDistribution=LabelDistribution, percentile=percentile))**alpha
+    R = S/D
+    np.fill_diagonal(S,0); np.fill_diagonal(D,1); np.fill_diagonal(R,0) # filling diagnols with 0 and 1
+    return X, S, D, R
+
+# returns a matrix of the top k-neighbours for each data point
+def findKNeighbourhood(S,D,R,k=3, returnType = 'sim'):
+    neiWeights=np.zeros(shape=S.shape) # initialize zero matrix
+    for i in range(S.shape[0]): 
+        indices = (R[i]).argsort()[-k:] # get the indices of the 3 largest R's
+        targetDist = np.amax(D[i,indices]) # get the corresponding distances and find the largest dist
+        # return ratio or sim if less than dist else 0 
+        if returnType=='sim':
+            neiWeights[i]=np.array([S[i,index] if x<=float(targetDist) else 0 for index,x in enumerate(D[i])]) 
+        if returnType=='ratio':        
+            neiWeights[i]=np.array([R[i,index] if x<=float(targetDist) else 0 for index,x in enumerate(D[i])]) 
+    return neiWeights
+
+# returns the distances matrices to be implemented in cvx
+def createWeightedDistanceMatrices(Nei, X):
+   d_ij_S = np.zeros(shape=[X.shape[0],X.shape[0],X.shape[1]])
+
+   for i in range(X.shape[0]):
+       for j in range(i+1, X.shape[0]):
+        d_ij_S[i,j,:] = Nei[i,j]*np.square(np.array(X[i]-X[j])) # x_i - x_j vector mulitplied by its weight 
+   
+   return d_ij_S
+
+# transformed X using Matrix factorization for the optimization output
+def XTransform(M, X):
+    L = np.linalg.cholesky(M)
+    return np.dot(X,L)
 
