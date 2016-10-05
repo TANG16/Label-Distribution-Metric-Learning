@@ -51,11 +51,11 @@ for filename in smallerLabelsList:
 ###TEMP:
 def genSimDistMat(measure, labels, sigma=None, labelDistribution = True, percentile=True): 
     if type(labels) == str: Y = globals()[labels]
-    if ~labelDistribution: Y = createDistributionLabels(Y)   
+    #if ~labelDistribution: Y = createDistributionLabels(Y)   
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     #if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
     for i in range(S.shape[0]):
-        for j in range(S.shape[0]):
+        for j in range(i+1, S.shape[0]): #changing to calculate only upper triangle
             if measure == 'cosine': S[i,j] = np.dot(Y[i],Y[j])/(np.linalg.norm(Y[i])*np.linalg.norm(Y[j]))
             if measure == 'fidelity': S[i,j] = np.sum(np.sqrt(np.multiply(Y[i],Y[j])))
             if measure == 'intersection': S[i,j] =  np.sum(np.minimum(Y[i],Y[j]))   
@@ -106,6 +106,8 @@ histCreator(metricLst, smallerLabelsList)
 
 
 ################Generating Sim and Dist Matrices###############################
+os.chdir('./data')
+
 X_data = np.genfromtxt('./LIDC_REU2015.csv', delimiter = ',', skip_header = 1 , usecols = (range(11,76)))
 Y_data = np.genfromtxt('./LIDC_REU2015.csv', delimiter = ',', skip_header = 1, usecols = (84,93,102,111)).astype(int)
 
@@ -119,7 +121,7 @@ Y_data = np.genfromtxt('./SJALabels.csv', delimiter = ',')
 
 trainX, trainY, testX, testY = splitTrainTest(X_data,Y_data,0.7,99)
 
-X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY, scale ='01',alpha = 0.5)
+X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY)
 
 os.chdir('./..')
 

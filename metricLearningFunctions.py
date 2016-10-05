@@ -28,11 +28,13 @@ def createDistributionLabels(targetArray):
 # returns matrix for various sim and dist metrics
 def genSimDistMat(measure, labels, sigma=None, labelDistribution = True, percentile=True): 
     if type(labels) == str: Y = globals()[labels]
-    if ~labelDistribution: Y = createDistributionLabels(Y)   
+    else: Y = labels 
+    #if labelDistribution == False: Y = createDistributionLabels(Y)   
+        
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
     for i in range(S.shape[0]):
-        for j in range(S.shape[0]):
+        for j in range(i+1, S.shape[0]):#changing to calculate only upper triangle
             if measure == 'cosine': S[i,j] = np.dot(Y[i],Y[j])/(np.linalg.norm(Y[i])*np.linalg.norm(Y[j]))
             if measure == 'fidelity': S[i,j] = np.sum(np.sqrt(np.multiply(Y[i],Y[j])))
             if measure == 'intersection': S[i,j] =  np.sum(np.minimum(Y[i],Y[j]))   
@@ -75,9 +77,12 @@ def metricStats(metricList, labels):
 # return a percentile matrix for the inputted matrix
 def convertMatToPercentile(S):
     originalShape = S.shape
+    global arr
     arr = S.flatten()
     sortedUniqueArr = np.unique(np.sort(arr))
+    global percentileArr
     percentileArr = np.linspace(0.01,0.99,len(sortedUniqueArr))
+    global percentileValueDict
     percentileValueDict = {x:percentileArr[i] for i,x in enumerate(sortedUniqueArr)}
     percentileArr = np.array([percentileValueDict[x] for x in arr])
     
@@ -122,7 +127,7 @@ def splitTrainTest(data,Labels,train_percent,random_state, minmax=False):
     return train, trainLabels, test, testLabels
 
 # returns the data(X), Label Similarity(S), Feature Dist(D), S/R (R)  matrices
-## currently only accepts cosine sim and dist 
+## currently only calculates cosine sim and dist 
 def genSimDistRatioMats(data, targetArray, alpha = 1, LabelDistribution = True, percentile=True): 
     X = data  
     S = (genSimDistMat('cosine',targetArray,labelDistribution=LabelDistribution, percentile=percentile))**alpha
