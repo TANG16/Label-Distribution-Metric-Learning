@@ -28,8 +28,7 @@ def createDistributionLabels(targetArray):
 # returns matrix for various sim and dist metrics
 def genSimDistMat(measure, labels, sigma=None, labelDistribution = True, percentile=True): 
     if type(labels) == str: Y = globals()[labels]
-    if labelDistribution: Y = labels
-    else: Y = createDistributionLabels(Y)     
+    if ~labelDistribution: Y = createDistributionLabels(Y)   
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
     for i in range(S.shape[0]):
@@ -99,9 +98,9 @@ def metricStatsforLabelList(metricList, labelsList):
 # prints histograms for the inputted matrices
 def histCreator(metricList, labelsList):
     for metric in metricList:
-        for labels in labelsList:
-            figName = metric + '-' + labels + '.png'
-            simDistArray = np.asarray(genSimDistMat(metric, labels, sigma=None, labelDistribution = True)).reshape(-1)
+        for label in labelsList:
+            figName = metric + '-' + label + '.png'
+            simDistArray = np.asarray(genSimDistMat(metric, label, sigma=None, labelDistribution = True)).reshape(-1)
             plt.figure()
             plt.hist(simDistArray[~np.isnan(simDistArray)])
             plt.title(figName)
