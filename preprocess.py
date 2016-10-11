@@ -13,9 +13,9 @@ os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning')
 
 from metricLearningFunctions import *
 
-###################Initial data Exploration####################################
+###################Initial Data Exploration####################################
 metrics = ['cosine', 'fidelity', 'intersection', 'euclidean', 'sorensen', 'squaredChiSq',\
-               'chebyshev', 'clark', 'canberra','KL', 'gaussian']
+               'chebyshev', 'clark', 'canberra','KL']
 
 
 #trial = np.array([[0.1, 0.2, 0.3, 0.4],[0.5, 0.5, 0, 0], [0.1, 0.3, 0.6, 0], [0.2, 0.4, 0.1, 0.3]])
@@ -28,31 +28,39 @@ for fileName in os.listdir('./'):
     if 'Label' in fileName:
         labelsDict[fileName] = np.genfromtxt(fileName, delimiter=',')
         labelsList.append(fileName)
+    if 'LIDC' in fileName:
+        labelsDict[fileName] =  np.genfromtxt(fileName, delimiter = ',', skip_header = 1, usecols = (84,93,102,111)).astype(int)
+        labelsList.append(fileName)
 labelsList
 
 smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv',\
- 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
+ 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv', 'LIDC_REU2015.csv' ]
 metricLst = ['cosine', 'fidelity','intersection','euclidean','squaredChiSq','chebyshev']
 
-results = metricStatsforLabelList(metrics, smallerLabelsList, labelsDict)
+##### The stats by metric for each label
+# no Percentiles
+resultsNoPercentiles = metricStatsforLabelList(metricLst, smallerLabelsList, labelsDict, False)
 
-# To create a gaussian matrices and stats
-for filename in smallerLabelsList:
-    S, EuclStddev =  gaussSimMatrix(filename, sigma=None)
-    print 'sigma = ', EuclStddev, \
-    'mean =', np.nanmean(S), 'stddev =', np.nanstd(S),\
-    'max =', np.nanmax(S), 'min =', np.nanmin(S)
-
+# Percentiles
+resultsPercentiles = metricStatsforLabelList(metricLst, smallerLabelsList, labelsDict, True)
 
 ####Plotting and saving the histograms:
+# no percentiles
+os.chdir('./..')
+
+os.chdir('./newHistograms/regular')
+
+histCreator(metrics, smallerLabelsList, labelsDict, False)    
 
 os.chdir('./..')
 
-os.chdir('./percentileImages')
+# with percentiles
+os.chdir('./percentiles')
 
-histCreator(metricLst, smallerLabelsList, labelsDict)    
+histCreator(metrics, smallerLabelsList, labelsDict, True)    
 
 
+##################Pre-Processing For Metric Learning###########################
 ################Generating Sim and Dist Matrices###############################
 os.chdir('./data')
 

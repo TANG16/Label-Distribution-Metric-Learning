@@ -11,7 +11,7 @@ import random
 from sklearn.preprocessing import MinMaxScaler
 
 ###############FUNCTIONS############################
-
+# please note that most functions auto-detect LIDC data and gen the distribution labels
 # return distribution labels for the LIDC-like datasets
 def createDistributionLabels(targetArray):
     distributionLabel = []
@@ -26,6 +26,7 @@ def createDistributionLabels(targetArray):
     
 
 # returns matrix for various sim and dist metrics
+# Gaussian currently doesnt generate the percentiles
 def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribution = True, percentile=True): 
     
     if type(labels) == str: Y = labelsDict[labels]
@@ -57,15 +58,17 @@ def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribut
 # returns a Gaussian similarity matrix
 def gaussSimMatrix(labels,labelsDict, sigma=None):
     Y=labels    
-    euclideanSimMat =  genSimDistMat('euclidean',Y, labelsDict)
+    euclideanSimMat =  genSimDistMat('euclidean',Y, labelsDict,  percentile=False)
     if sigma is None: sigma = np.nanstd(euclideanSimMat)
     return np.exp(-euclideanSimMat**2/(2*(sigma)**2)), sigma  
         
 # returns important stats for the labels
-def metricStats(metricList, labels, labelsDict):
+def metricStats(metricList, labels, labelsDict, percentile):
     mean = []; std = []; maxLst = []; minLst = []; nanCount = []
+    if 'LIDC' in labels: labelDistribution = False
+    else: labelDistribution = True    
     for metric in metricList: #Nan values are ignored when calculating the performance
-        S = genSimDistMat(metric, labels, labelsDict)
+        S = genSimDistMat(metric, labels, labelsDict, percentile=percentile, labelDistribution=labelDistribution)
         nanCount.append(np.sum(np.isnan(S)))
         mean.append(np.nanmean(S))       
         std.append(np.nanstd(S))
@@ -91,10 +94,10 @@ def convertMatToPercentile(S):
     
    
 # returns stats for each element in the list
-def metricStatsforLabelList(metricList, labelsList, labelsDict):
+def metricStatsforLabelList(metricList, labelsList, labelsDict,  percentile):
     resultDict = {}
     for labels in labelsList:
-        result = metricStats(metricList, labels, labelsDict)
+        result = metricStats(metricList, labels, labelsDict, percentile)
         resultDict[labels] = result
         print labels
         print result
@@ -102,11 +105,14 @@ def metricStatsforLabelList(metricList, labelsList, labelsDict):
     return resultDict
 
 # prints histograms for the inputted matrices
-def histCreator(metricList, labelsList, labelsDict):
+def histCreator(metricList, labelsList, labelsDict, percentile):
     for metric in metricList:
         for label in labelsList:
             figName = metric + '-' + label + '.png'
-            simDistArray = np.asarray(genSimDistMat(metric, label, labelsDict, sigma=None, labelDistribution = True)).reshape(-1)
+            if 'LIDC' in label: labelDistribution = False
+            else: labelDistribution = True    
+            simDistArray = np.asarray(genSimDistMat(metric, label, labelsDict,\
+            labelDistribution=labelDistribution, percentile=percentile)).reshape(-1)
             plt.figure()
             plt.hist(simDistArray[~np.isnan(simDistArray)])
             plt.title(figName)
