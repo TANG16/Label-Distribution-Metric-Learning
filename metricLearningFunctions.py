@@ -33,7 +33,7 @@ def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribut
     if labelDistribution == False: Y = createDistributionLabels(Y)   
         
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
-    if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
+    if measure == 'gaussian': return gaussSimMatrix(labels, labelsDict, sigma)[0]
     for i in range(S.shape[0]):
         for j in range(i+1, S.shape[0]):#changing to calculate only upper triangle
             if measure == 'cosine': S[i,j] = np.dot(Y[i],Y[j])/(np.linalg.norm(Y[i])*np.linalg.norm(Y[j]))
@@ -55,9 +55,9 @@ def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribut
     return S
 
 # returns a Gaussian similarity matrix
-def gaussSimMatrix(labels, sigma=None):
+def gaussSimMatrix(labels,labelsDict, sigma=None):
     Y=labels    
-    euclideanSimMat =  genSimDistMat('euclidean',Y)
+    euclideanSimMat =  genSimDistMat('euclidean',Y, labelsDict)
     if sigma is None: sigma = np.nanstd(euclideanSimMat)
     return np.exp(-euclideanSimMat**2/(2*(sigma)**2)), sigma  
         

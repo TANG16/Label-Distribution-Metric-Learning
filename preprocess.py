@@ -7,9 +7,6 @@ Created on Tue Oct 04 23:03:51 2016
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import random
-from sklearn.preprocessing import MinMaxScaler
 
 os.chdir('C:/Users/syarlag1/Desktop/Label-Distribution-Metric-Learning')
 #os.chdir('/Users/Sriram/Desktop/DePaul/Label-Distribution-Metric-Learning/data')
@@ -33,10 +30,11 @@ for fileName in os.listdir('./'):
         labelsList.append(fileName)
 labelsList
 
-smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv', 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
+smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv',\
+ 'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv' ]
 metricLst = ['cosine', 'fidelity','intersection','euclidean','squaredChiSq','chebyshev']
 
-results = metricStatsforLabelList(metrics, smallerLabelsList)
+results = metricStatsforLabelList(metrics, smallerLabelsList, labelsDict)
 
 # To create a gaussian matrices and stats
 for filename in smallerLabelsList:
@@ -66,8 +64,6 @@ Y_data = np.genfromtxt('./naturalSceneLabels.csv', delimiter = ',')
 
 X_data = np.genfromtxt('./SJAFeatures.csv', delimiter = ',')
 Y_data = np.genfromtxt('./SJALabels.csv', delimiter = ',')
-
-
 
 trainX, trainY, testX, testY = splitTrainTest(X_data,Y_data,0.7,99)
 
