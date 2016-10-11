@@ -26,10 +26,11 @@ def createDistributionLabels(targetArray):
     
 
 # returns matrix for various sim and dist metrics
-def genSimDistMat(measure, labels, sigma=None, labelDistribution = True, percentile=True): 
-    if type(labels) == str: Y = globals()[labels]
+def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribution = True, percentile=True): 
+    
+    if type(labels) == str: Y = labelsDict[labels]
     else: Y = labels 
-    #if labelDistribution == False: Y = createDistributionLabels(Y)   
+    if labelDistribution == False: Y = createDistributionLabels(Y)   
         
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
     if measure == 'gaussian': return gaussSimMatrix(labels, sigma)[0]
@@ -61,10 +62,10 @@ def gaussSimMatrix(labels, sigma=None):
     return np.exp(-euclideanSimMat**2/(2*(sigma)**2)), sigma  
         
 # returns important stats for the labels
-def metricStats(metricList, labels):
+def metricStats(metricList, labels, labelsDict):
     mean = []; std = []; maxLst = []; minLst = []; nanCount = []
     for metric in metricList: #Nan values are ignored when calculating the performance
-        S = genSimDistMat(metric, labels)
+        S = genSimDistMat(metric, labels, labelsDict)
         nanCount.append(np.sum(np.isnan(S)))
         mean.append(np.nanmean(S))       
         std.append(np.nanstd(S))
@@ -90,10 +91,10 @@ def convertMatToPercentile(S):
     
    
 # returns stats for each element in the list
-def metricStatsforLabelList(metricList, labelsList):
+def metricStatsforLabelList(metricList, labelsList, labelsDict):
     resultDict = {}
     for labels in labelsList:
-        result = metricStats(metricList, labels)
+        result = metricStats(metricList, labels, labelsDict)
         resultDict[labels] = result
         print labels
         print result
@@ -101,11 +102,11 @@ def metricStatsforLabelList(metricList, labelsList):
     return resultDict
 
 # prints histograms for the inputted matrices
-def histCreator(metricList, labelsList):
+def histCreator(metricList, labelsList, labelsDict):
     for metric in metricList:
         for label in labelsList:
             figName = metric + '-' + label + '.png'
-            simDistArray = np.asarray(genSimDistMat(metric, label, sigma=None, labelDistribution = True)).reshape(-1)
+            simDistArray = np.asarray(genSimDistMat(metric, label, labelsDict, sigma=None, labelDistribution = True)).reshape(-1)
             plt.figure()
             plt.hist(simDistArray[~np.isnan(simDistArray)])
             plt.title(figName)
