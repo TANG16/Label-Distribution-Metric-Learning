@@ -29,13 +29,14 @@ for fileName in os.listdir('./'):
         labelsDict[fileName] = np.genfromtxt(fileName, delimiter=',')
         labelsList.append(fileName)
     if 'LIDC' in fileName:
-        labelsDict[fileName] =  np.genfromtxt(fileName, delimiter = ',', skip_header = 1, usecols = (84,93,102,111)).astype(int)
+        labelsDict[fileName] =  np.genfromtxt(fileName, delimiter = ',',\
+        skip_header = 1, usecols = (84,93,102,111)).astype(int)
         labelsList.append(fileName)
 labelsList
 
 smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels.csv',\
  'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv', 'LIDC_REU2015.csv' ]
-metricLst = ['cosine', 'fidelity','intersection','euclidean','squaredChiSq','chebyshev']
+metricLst = ['cosine', 'fidelity','intersection','euclidean','chebyshev', 'sorensen', 'squaredChiSq']
 
 ##### The stats by metric for each label
 # no Percentiles
@@ -50,14 +51,14 @@ os.chdir('./..')
 
 os.chdir('./newHistograms/regular')
 
-histCreator(metrics, smallerLabelsList, labelsDict, False)    
+histCreator(metrics, smallerLabelsList, labelsDict, 20, False)    
 
 os.chdir('./..')
 
 # with percentiles
 os.chdir('./percentiles')
 
-histCreator(metrics, smallerLabelsList, labelsDict, True)    
+histCreator(metrics, smallerLabelsList, labelsDict, 20, True)    
 
 
 ##################Pre-Processing For Metric Learning###########################
