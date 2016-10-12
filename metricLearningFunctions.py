@@ -27,6 +27,7 @@ def createDistributionLabels(targetArray):
 
 # returns matrix for various sim and dist metrics
 # Gaussian currently doesnt generate the percentiles
+# if percentile is selected, returns array instead of matrix
 def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribution = True, percentile=True): 
     
     if type(labels) == str: Y = labelsDict[labels]
@@ -34,6 +35,7 @@ def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribut
     if labelDistribution == False: Y = createDistributionLabels(Y)   
         
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
+    S.fill(-1) # this is needed to remove the lower triangle values
     if measure == 'gaussian': return gaussSimMatrix(labels, labelsDict, sigma)[0]
     for i in range(S.shape[0]):
         for j in range(i+1, S.shape[0]):#changing to calculate only upper triangle
@@ -67,9 +69,11 @@ def metricStats(metricList, labels, labelsDict, percentile):
     mean = []; std = []; maxLst = []; minLst = []; nanCount = []
     if 'LIDC' in labels: labelDistribution = False
     else: labelDistribution = True    
-    for metric in metricList: #Nan values are ignored when calculating the performance
+    for metric in metricList: # Nan values are ignored when calculating the performance
         S = genSimDistMat(metric, labels, labelsDict, percentile=percentile, labelDistribution=labelDistribution)
-        nanCount.append(np.sum(np.isnan(S)))
+        nanCount.append(np.sum(np.isnan(S)))        
+        S = S.flatten()
+        S = S[S>=0] # to remove lower triangle values
         mean.append(np.nanmean(S))       
         std.append(np.nanstd(S))
         maxLst.append(np.nanmax(S))
@@ -80,9 +84,9 @@ def metricStats(metricList, labels, labelsDict, percentile):
     
 # return a percentile matrix for the inputted matrix
 def convertMatToPercentile(S):
-    originalShape = S.shape
     global arr
-    arr = S.flatten()
+    arr = S.flatten();
+    arr = arr[arr>=0] # to remove lower triangle values
     sortedUniqueArr = np.unique(np.sort(arr))
     global percentileArr
     percentileArr = np.linspace(0.01,0.99,len(sortedUniqueArr))
@@ -90,7 +94,7 @@ def convertMatToPercentile(S):
     percentileValueDict = {x:percentileArr[i] for i,x in enumerate(sortedUniqueArr)}
     percentileArr = np.array([percentileValueDict[x] for x in arr])
     
-    return np.reshape(percentileArr, originalShape)
+    return percentileArr
     
    
 # returns stats for each element in the list
@@ -105,16 +109,18 @@ def metricStatsforLabelList(metricList, labelsList, labelsDict,  percentile):
     return resultDict
 
 # prints histograms for the inputted matrices
-def histCreator(metricList, labelsList, labelsDict, percentile):
+def histCreator(metricList, labelsList, labelsDict, bins, percentile):
     for metric in metricList:
         for label in labelsList:
             figName = metric + '-' + label + '.png'
             if 'LIDC' in label: labelDistribution = False
             else: labelDistribution = True    
-            simDistArray = np.asarray(genSimDistMat(metric, label, labelsDict,\
-            labelDistribution=labelDistribution, percentile=percentile)).reshape(-1)
+            S = genSimDistMat(metric, label, labelsDict,\
+            labelDistribution=labelDistribution, percentile=percentile)
+            S = S.flatten()
+            S = S[S>=0]            
             plt.figure()
-            plt.hist(simDistArray[~np.isnan(simDistArray)])
+            plt.hist(S[~np.isnan(S)], bins=bins)
             plt.title(figName)
             plt.savefig(figName)
     return            
