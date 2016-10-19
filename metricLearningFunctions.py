@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import random
 from sklearn.preprocessing import MinMaxScaler
-
+plt.style.use('ggplot')
 ###############FUNCTIONS############################
 # please note that most functions auto-detect LIDC data and gen the distribution labels
 # return distribution labels for the LIDC-like datasets
@@ -28,14 +28,14 @@ def createDistributionLabels(targetArray):
 # returns matrix for various sim and dist metrics
 # Gaussian currently doesnt generate the percentiles
 # if percentile is selected, returns array instead of matrix
-def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribution = True, percentile=True): 
+def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribution = True, percentile=True, negFill=True): 
     
     if type(labels) == str: Y = labelsDict[labels]
     else: Y = labels 
     if labelDistribution == False: Y = createDistributionLabels(Y)   
         
     S = np.zeros(shape=[Y.shape[0], Y.shape[0]])
-    S.fill(-1) # this is needed to remove the lower triangle values
+    if negFill: S.fill(-1) # this is needed to remove the lower triangle values
     if measure == 'gaussian': return gaussSimMatrix(labels, labelsDict, sigma)[0]
     for i in range(S.shape[0]):
         for j in range(i+1, S.shape[0]):#changing to calculate only upper triangle
@@ -54,7 +54,7 @@ def genSimDistMat(measure, labels, labelsDict = None, sigma=None, labelDistribut
                     tempSum += Y[i,k]*(np.log((Y[i,k] if Y[i,k]>0 else 0.01)/(Y[j,k] if Y[j,k]>0 else 0.01)))
                 S[i,j] = tempSum
     if percentile:
-        return convertMatToPercentile(S)
+        return convertMatToPercentile(S, negFill)
     return S
 
 # returns a Gaussian similarity matrix
@@ -83,19 +83,22 @@ def metricStats(metricList, labels, labelsDict, percentile):
     return pd.DataFrame(combinedList, columns = colNames)
     
 # return a percentile matrix for the inputted matrix
-def convertMatToPercentile(S):
-    global arr
-    arr = S.flatten();
-    arr = arr[arr>=0] # to remove lower triangle values
+# negFill=True returns array. False returns matrix
+def convertMatToPercentile(S, negFill):
+    if negFill:    
+        arr = S.flatten();
+        arr = arr[arr>=0] # to remove lower triangle values
+    else:
+        originalShape = S.shape
+        arr = S.flatten()    
+        
     sortedUniqueArr = np.unique(np.sort(arr))
-    global percentileArr
     percentileArr = np.linspace(0.01,0.99,len(sortedUniqueArr))
-    global percentileValueDict
     percentileValueDict = {x:percentileArr[i] for i,x in enumerate(sortedUniqueArr)}
     percentileArr = np.array([percentileValueDict[x] for x in arr])
     
-    return percentileArr
-    
+    if negFill: return percentileArr
+    else: return np.reshape(percentileArr, originalShape)
    
 # returns stats for each element in the list
 def metricStatsforLabelList(metricList, labelsList, labelsDict,  percentile):
@@ -141,10 +144,10 @@ def splitTrainTest(data,Labels,train_percent,random_state, minmax=False):
 
 # returns the data(X), Label Similarity(S), Feature Dist(D), S/R (R)  matrices
 ## currently only calculates cosine sim and dist 
-def genSimDistRatioMats(data, targetArray, alpha = 1, LabelDistribution = True, percentile=True): 
+def genSimDistRatioMats(data, targetArray, alpha = 1, LabelDistribution = True, percentile=True, negFill=False): 
     X = data  
-    S = (genSimDistMat('cosine',targetArray,labelDistribution=LabelDistribution, percentile=percentile))**alpha
-    D = (1 - genSimDistMat('cosine',X,labelDistribution=LabelDistribution, percentile=percentile))**alpha
+    S = (genSimDistMat('cosine',targetArray,labelDistribution=LabelDistribution, percentile=percentile,negFill=negFill))**alpha
+    D = (1 - genSimDistMat('cosine',X,labelDistribution=LabelDistribution, percentile=percentile,negFill=negFill))**alpha 
     R = S/D
     np.fill_diagonal(S,0); np.fill_diagonal(D,1); np.fill_diagonal(R,0) # filling diagnols with 0 and 1
     return X, S, D, R
@@ -161,6 +164,19 @@ def findKNeighbourhood(S,D,R,k=3, returnType = 'sim'):
         if returnType=='ratio':        
             neiWeights[i]=np.array([R[i,index] if x<=float(targetDist) else 0 for index,x in enumerate(D[i])]) 
     return neiWeights
+
+
+# returns the push neighbourhood and the pull neighbourhood matrices
+def pullPushMats(Nei, R, k):
+    pushMat = np.zeros(shape=R.shape) # initialize the push and pull matrices
+    pullMat = np.zeros(shape=R.shape)
+    for i in range(R.shape[0]): 
+        indices = (R[i]).argsort()[-k:] # get the indices of the 3 largest R's     
+        pullMat[i] = np.array([NeiVal if iNei in indices else 0 for iNei, NeiVal in enumerate(Nei[i])])
+        tempArr = Nei[i]; tempArr[indices] = 0 # set 
+        pushMat[i] = tempArr
+    return pullMat, pushMat
+
 
 # returns the distances matrices to be implemented in cvx
 def createWeightedDistanceMatrices(Nei, X):

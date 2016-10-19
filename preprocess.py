@@ -38,27 +38,8 @@ smallerLabelsList = ['SJALabels.csv','naturalSceneLabels.csv', 'YeastSPOEMLabels
  'YeastHeatLabels.csv', 'YeastSPOEMLabels.csv', 'LIDC_REU2015.csv' ]
 metricLst = ['cosine', 'fidelity','intersection','euclidean','chebyshev', 'sorensen', 'squaredChiSq']
 
-##### The stats by metric for each label
-# no Percentiles
-resultsNoPercentiles = metricStatsforLabelList(metricLst, smallerLabelsList, labelsDict, False)
 
-# Percentiles
-resultsPercentiles = metricStatsforLabelList(metricLst, smallerLabelsList, labelsDict, True)
 
-####Plotting and saving the histograms:
-# no percentiles
-os.chdir('./..')
-
-os.chdir('./newHistograms/regular')
-
-histCreator(metrics, smallerLabelsList, labelsDict, 20, False)    
-
-os.chdir('./..')
-
-# with percentiles
-os.chdir('./percentiles')
-
-histCreator(metrics, smallerLabelsList, labelsDict, 20, True)    
 
 
 ##################Pre-Processing For Metric Learning###########################
@@ -76,16 +57,21 @@ Y_data = np.genfromtxt('./SJALabels.csv', delimiter = ',')
 
 trainX, trainY, testX, testY = splitTrainTest(X_data,Y_data,0.7,99)
 
-X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY)
+# if using percentiles (default is True), set negFill = False
+X,S,D,R = genSimDistRatioMats(data = trainX, targetArray = trainY, negFill=False) 
 
 os.chdir('./..')
 
-np.savetxt('./S.csv',S)
-np.savetxt('./R.csv', R)
+np.savetxt('./S.csv',S,delimiter=',')
+np.savetxt('./R.csv', R,delimiter=',')
 
 NN3_Ws = findKNeighbourhood(S,D,R,k=3)
-np.savetxt('./N.csv',NN3_Ws)
-np.savetxt('./X.csv',trainX)
+pullMat, pushMat = pullPushMats(NN3_Ws, R, 3)
+
+
+np.savetxt('./pull.csv',pullMat,delimiter=',')
+np.savetxt('./push.csv',pushMat,delimiter=',')
+
 #####Checks:
 np.mean(S)
 
